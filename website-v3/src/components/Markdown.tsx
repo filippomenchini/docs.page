@@ -6,7 +6,7 @@ import context from 'src/context';
 import Link from './Link';
 import FontAwesome from './FontAwesome';
 
-import CodeBlock, { CodeBlockProps } from './mdx/CodeBlock';
+import CodeBlock, { type CodeBlockProps } from './mdx/CodeBlock';
 import CodeGroup from './mdx/CodeGroup';
 import Accordion from './mdx/Accordion';
 import Image from './mdx/Image';

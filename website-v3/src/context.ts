@@ -1,4 +1,6 @@
 import { map } from 'nanostores';
+import { useStore } from '@nanostores/react';
+
 import type { BundleConfig, GetBundleResponseSuccess, SidebarArray } from './bundle';
 
 export type Context = {
@@ -39,5 +41,9 @@ export type Context = {
 };
 
 const store = map<Context>();
+
+export function useContext() {
+  return useStore(store);
+}
 
 export default store;

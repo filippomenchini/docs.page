@@ -1,4 +1,4 @@
-import context from 'src/context';
+import { useContext } from 'src/context';
 import { getImagePath } from 'src/utils';
 
 interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -7,8 +7,8 @@ interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 }
 
 const Image: React.FC<ImageProps> = props => {
-  const { config } = context.get();
-  const src = getImagePath(props.src ?? '');
+  const { config, source, baseBranch } = useContext();
+  const src = getImagePath(source, baseBranch, props.src ?? '');
   const { width, height, ...other } = props;
 
   const zoom = Boolean(props.zoom) || config.zoomImages;

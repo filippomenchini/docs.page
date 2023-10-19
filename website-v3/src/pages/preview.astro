@@ -1,0 +1,10 @@
+---
+import PreviewMode from '@components/Preview';
+import Styles from '@components/Styles.astro';
+import Root from '@layouts/Root.astro';
+---
+
+<Root title="Preview">
+  <Styles slot="head" />
+  <PreviewMode client:only />
+</Root>

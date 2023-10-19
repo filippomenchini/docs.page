@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const $ApiError = z.object({
+  code: z.enum(['NOT_FOUND', 'BAD_REQUEST', 'REPO_NOT_FOUND', 'FILE_NOT_FOUND', 'BUNDLE_ERROR']),
+  error: z.string().catch(''),
+});
+
 const $SidebarItem = z.tuple([
   z.string(),
   z.union([z.string(), z.array(z.tuple([z.string(), z.string()]))]),
@@ -54,6 +59,14 @@ const $GetBundleRequest = z.object({
   path: z.string().optional(),
 });
 
+const $GetPreviewRequest = z.object({
+  config: z.object({
+    json: z.string().optional(),
+    yaml: z.string().optional(),
+  }),
+  markdown: z.string(),
+});
+
 const $GetBundleResponseSuccess = z.object({
   source: z.object({
     type: z.enum(['PR', 'branch', 'commit']),
@@ -78,24 +91,54 @@ const $GetBundleResponseSuccess = z.object({
   ),
 });
 
+const $GetPreviewResponseSuccess = z.object({
+  config: $BundleConfig,
+  code: z.string(),
+  frontmatter: z.record(z.string()),
+  headings: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      rank: z.number().nullable(),
+    }),
+  ),
+});
+
 const $GetBundleResponse = z.union([
   z.object({
     code: z.literal('OK'),
     data: $GetBundleResponseSuccess,
   }),
+  $ApiError,
+]);
+
+const $GetPreviewResponse = z.union([
   z.object({
-    code: z.enum(['NOT_FOUND', 'BAD_REQUEST', 'REPO_NOT_FOUND', 'FILE_NOT_FOUND', 'BUNDLE_ERROR']),
-    error: z.string().catch(''),
+    code: z.literal('OK'),
+    data: $GetPreviewResponseSuccess,
   }),
+  $ApiError,
 ]);
 
 export type GetBundleRequest = z.infer<typeof $GetBundleRequest>;
 export type GetBundleResponse = z.infer<typeof $GetBundleResponse>;
 export type GetBundleResponseSuccess = z.infer<typeof $GetBundleResponseSuccess>;
 
+export type GetPreviewRequest = z.infer<typeof $GetPreviewRequest>;
+export type GetPreviewResponse = z.infer<typeof $GetPreviewResponse>;
+export type GetPreviewResponseSuccess = z.infer<typeof $GetPreviewResponseSuccess>;
+
 export type BundleConfig = z.infer<typeof $BundleConfig>;
 export type SidebarArray = z.infer<typeof $SidebarArray>;
 export type SidebarRecord = z.infer<typeof $SidebarRecord>;
+
+function getAuth() {
+  if (typeof window === 'undefined') {
+    return 'Bearer ' + Buffer.from(`admin:${import.meta.env.API_PASSWORD}`).toString('base64');
+  }
+
+  return btoa(`admin:${import.meta.env.API_PASSWORD}`);
+}
 
 export async function getBundle(options: GetBundleRequest): Promise<GetBundleResponse> {
   // Validate the input
@@ -105,12 +148,19 @@ export async function getBundle(options: GetBundleRequest): Promise<GetBundleRes
     throw new Error('Please provide API_PASSWORD env variable');
   }
 
-  const endpoint = getEndpoint(options);
+  const endpoint = getEndpoint();
 
-  const response = await fetch(endpoint, {
+  const params = new URLSearchParams({
+    owner: options.owner,
+    repository: options.repository,
+  });
+
+  if (options.path) params.append('path', options.path);
+  if (options.ref) params.append('ref', options.ref);
+
+  const response = await fetch(`${endpoint}/bundle?${params.toString()}`, {
     headers: new Headers({
-      Authorization:
-        'Bearer ' + Buffer.from(`admin:${import.meta.env.API_PASSWORD}`).toString('base64'),
+      Authorization: getAuth(),
     }),
   });
 
@@ -123,19 +173,37 @@ export async function getBundle(options: GetBundleRequest): Promise<GetBundleRes
   return output.data;
 }
 
-function getEndpoint(options: GetBundleRequest): string {
-  const params = new URLSearchParams({
-    owner: options.owner,
-    repository: options.repository,
+export async function getPreview(options: GetPreviewRequest): Promise<GetPreviewResponse> {
+  $GetPreviewRequest.parse(options);
+
+  if (import.meta.env.NODE_ENV == 'production' && !import.meta.env.API_PASSWORD) {
+    throw new Error('Please provide API_PASSWORD env variable');
+  }
+
+  const endpoint = getEndpoint();
+
+  const response = await fetch(`${endpoint}/preview`, {
+    method: 'POST',
+    body: JSON.stringify(options),
+    headers: new Headers({
+      Authorization: getAuth(),
+    }),
   });
 
-  if (options.path) params.append('path', options.path);
-  if (options.ref) params.append('ref', options.ref);
+  const output = $GetPreviewResponse.safeParse(await response.json());
 
+  if (!output.success) {
+    throw new Error(`Failed to fetch bundle for "${endpoint}". HTTP Status: "${response.status}".`);
+  }
+
+  return output.data;
+}
+
+function getEndpoint(): string {
   const base =
     import.meta.env.BUNDLER_URL || import.meta.env.PROD
       ? import.meta.env.BUNDLER_URL || `https://api.docs.page`
-      : 'http://localhost:8000';
+      : 'http://localhost:8080';
 
-  return `${base}/bundle?${params.toString()}`;
+  return base;
 }

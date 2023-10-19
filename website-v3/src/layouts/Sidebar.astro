@@ -1,11 +1,11 @@
 ---
 import locales from 'locale-codes';
-import FontAwesome, { FontAwesomeProps } from '@components/FontAwesome';
+import FontAwesome, { type FontAwesomeProps } from '@components/FontAwesome';
 import { ChevronDownIcon } from '@components/icons';
 import Link from '@components/Link';
 import context from 'src/context';
 import { isExternalLink } from 'src/utils';
-import RefBadge from '@components/RefBadge.astro';
+import RefBadge from '@components/RefBadge.tsx';
 
 const { owner, repository, config, locale, sidebar } = context.get();
 

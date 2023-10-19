@@ -4,7 +4,7 @@ import cors from 'cors';
 import { config } from 'dotenv';
 
 import bundle from './routes/bundle';
-import mdx from './routes/mdx';
+import preview from './routes/preview';
 import probot from './probot';
 import { notFound } from './res';
 
@@ -20,7 +20,6 @@ app.options('/raw', (_req, res) => {
   res.end;
 });
 app.use(morgan('dev'));
-app.use(express.json());
 app.use(
   express.urlencoded({
     extended: true,
@@ -32,7 +31,7 @@ app.use(probot);
 const router = Router();
 router.get('/status', (_, res) => res.status(200).send('OK'));
 router.get('/bundle', bundle);
-router.post('/mdx', mdx);
+router.post('/preview', preview);
 router.all('*', (_, res) => notFound(res));
 
 app.use(router);

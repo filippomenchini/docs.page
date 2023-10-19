@@ -1,3 +1,4 @@
+import { useContext } from 'src/context';
 import { getImagePath } from 'src/utils';
 
 interface VideoProps extends React.ComponentProps<'video'> {
@@ -6,6 +7,8 @@ interface VideoProps extends React.ComponentProps<'video'> {
 }
 
 function Video(props: VideoProps) {
+  const { source, baseBranch } = useContext();
+
   if (!props.src) {
     return <div />;
   }
@@ -14,7 +17,7 @@ function Video(props: VideoProps) {
 
   return (
     <video {...other}>
-      <source src={getImagePath(src)} type={type} />
+      <source src={getImagePath(source, baseBranch, src)} type={type} />
     </video>
   );
 }

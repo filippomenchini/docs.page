@@ -1,12 +1,20 @@
----
 import { MoonIcon, SunIcon } from './icons';
----
 
-<button data-theme-toggle class="relative w-6 h-6 transition-opacity hover:opacity-75">
-  <span data-theme-type="dark" class="hidden"><MoonIcon /></span>
-  <span data-theme-type="light" class="hidden"><SunIcon /></span>
-</button>
-<script>
+export default function ThemeToggle() {
+  return (
+    <button data-theme-toggle className="relative h-6 w-6 transition-opacity hover:opacity-75">
+      <span data-theme-type="dark" className="hidden">
+        <MoonIcon />
+      </span>
+      <span data-theme-type="light" className="hidden">
+        <SunIcon />
+      </span>
+    </button>
+  );
+}
+
+{
+  /* <script>
   import type { Context } from 'src/context';
   const { owner, repository, domain, ref } = (window as any).docs_page as Context;
   const html = document.documentElement;
@@ -51,4 +59,5 @@ import { MoonIcon, SunIcon } from './icons';
   });
 
   toggleElements();
-</script>
+</script> */
+}

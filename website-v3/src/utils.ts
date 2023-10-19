@@ -1,5 +1,6 @@
 import get from 'lodash.get';
-import context from 'src/context';
+import Color from 'color';
+import type { Context } from './context';
 
 const VARIABLE_REGEX = /{{\s([a-zA-Z0-9_.]*)\s}}/gm;
 
@@ -40,17 +41,16 @@ export function replaceMoustacheVariables(variables: Record<string, string>, val
 // Returns the correct image path for a given image;
 //  - if remote, returns the path as is
 //  - if local, returns the path with the correct base url
-export function getImagePath(src: string) {
+export function getImagePath(source: Context['source'], baseBranch: string, src: string) {
   if (src.startsWith('http')) {
     return src;
   }
 
-  return getBlobPath(src);
+  return getBlobPath(source, baseBranch, src);
 }
 
 // Returns a raw blob path for a given path.
-export function getBlobPath(src: string) {
-  const { source, baseBranch } = context.get();
+export function getBlobPath(source: Context['source'], baseBranch: string, src: string) {
   const { owner, repository, ref } = source;
 
   if (source.type === 'branch') {
@@ -67,4 +67,24 @@ export function getBlobPath(src: string) {
   return `https://raw.githubusercontent.com/${owner}/${repository}/main/docs${ensureLeadingSlash(
     src,
   )}`;
+}
+
+export function getColorTheme(value: string | undefined) {
+  const fallback = '#00bcd4';
+  let color: Color;
+  try {
+    color = Color(value || fallback);
+  } catch {
+    color = Color('#00bcd4');
+  }
+
+  const base = color.hex().toString();
+  const light = color.lighten(0.2).hex().toString();
+  const dark = color.darken(0.2).hex().toString();
+
+  return {
+    base,
+    light,
+    dark,
+  };
 }
